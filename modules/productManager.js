@@ -1,11 +1,13 @@
 const fs = require('fs')
-const filename = './Productos.json'
+
 
 class ProductManager {
+  #path
   static #ultimoIdProducto = 1
 
-  constructor() {
+  constructor(pathof) {
     this.products = []
+    this.#path = pathof
   }
   #getNuevoId() {
     const id = ProductManager.#ultimoIdProducto
@@ -33,18 +35,22 @@ class ProductManager {
         stock
       }
       this.products.push(newProduct)
-      await fs.promises.writeFile(filename, JSON.stringify(this.products, null, '\t'))
+      await fs.promises.writeFile(this.#path, JSON.stringify(this.products, null, '\t'))
 
 
     } else { return console.log('los campos no pueden estar vacios') }
   }
   async getProducts() {
     try {
-      const contenidoProductos = await fs.promises.readFile(filename)
-      return JSON.parse(contenidoProductos)
+      const contenidoProductos = await fs.promises.readFile(this.#path)
+      
+
+      
+      return contenidoProductos
+      
     }
     catch (err) {
-      return []
+      throw(err)
     }
   }
 
@@ -53,7 +59,7 @@ class ProductManager {
 
   async getProductById(id) {
     try {
-      const contenidoProductos = JSON.parse(await fs.promises.readFile(filename))
+      const contenidoProductos = JSON.parse(await fs.promises.readFile(this.#path))
 
       const foundProduct = contenidoProductos.find(product => product.id === id);
 
@@ -70,7 +76,7 @@ class ProductManager {
   }
   async updateProduct(id, title, description, price, thumbnail, code, stock) {
     try {
-      let contenidoProductos = JSON.parse(await fs.promises.readFile(filename))
+      let contenidoProductos = JSON.parse(await fs.promises.readFile(this.#path))
 
       const foundProductIdx = contenidoProductos.findIndex(product => product.id === id);
       const dataUp = contenidoProductos[foundProductIdx]
@@ -81,7 +87,7 @@ class ProductManager {
         dataUp.thumbnail = thumbnail
         dataUp.code = code
         dataUp.stock = stock
-        await fs.promises.writeFile(filename, JSON.stringify(contenidoProductos, null, '\t'))
+        await fs.promises.writeFile(this.#path, JSON.stringify(contenidoProductos, null, '\t'))
       }
 
     }
@@ -92,37 +98,24 @@ class ProductManager {
   }
   async deleteProduct(id) {
     try {
-      let contenidoProductos = JSON.parse(await fs.promises.readFile(filename))
+      let contenidoProductos = JSON.parse(await fs.promises.readFile(this.#path))
       const foundProductIdx = contenidoProductos.findIndex(product => product.id === id);
       if (foundProductIdx) {
         contenidoProductos.splice(foundProductIdx, 1)
-        await fs.promises.writeFile(filename, JSON.stringify(contenidoProductos, null, '\t'))
+        await fs.promises.writeFile(this.#path, JSON.stringify(contenidoProductos, null, '\t'))
       }
       console.log('No es posible encontrar el producto a eliminar')
     }
-    catch{
+    catch {
       console.log('error al eliminar el producto')
     }
 
 
   }
 
+};
+
+
+module.exports = {
+  ProductManager
 }
-
-
-
-const main = async () => {
-  const prod = new ProductManager()
-  await prod.addProduct('producto prueba', 'Este es un producto prueba', 200, 'Sin imagen', 'abc123', 25)
-  await prod.addProduct('producto prueba2', 'Este es un producto prueba', 200, 'Sin imagen', 'abc1234', 25)
-  await prod.updateProduct(2, 'producto prueba3', 'Este es un producto prueba3', 400, 'Sin imagen', 'abc1234', 50)
-  //console.log(await prod.getProducts())
-  
-  await prod.deleteProduct(5)
-  await prod.getProductById(2)
-}
-
-
-
-
-main()
