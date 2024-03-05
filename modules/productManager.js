@@ -2,13 +2,18 @@ const fs = require('fs')
 
 
 class ProductManager {
+  #products
   #path
   static #ultimoIdProducto = 1
 
   constructor(pathof) {
-    this.products = []
+    this.#products = []
     this.#path = pathof
   }
+  async iniciar(){
+    this.#products = await this.getProducts()
+  }
+
   #getNuevoId() {
     const id = ProductManager.#ultimoIdProducto
     ProductManager.#ultimoIdProducto++
@@ -20,7 +25,7 @@ class ProductManager {
   async addProduct(title, description, price, thumbnail, code, stock) {
 
     if (title || description || price || thumbnail || code || stock) {
-      if (this.products.some(product => product.code === code)) {
+      if (this.#products.some(product => product.code === code)) {
 
         return console.log('Error: ya existe un producto con ese codigo')
       }
@@ -34,23 +39,21 @@ class ProductManager {
         code,
         stock
       }
-      this.products.push(newProduct)
-      await fs.promises.writeFile(this.#path, JSON.stringify(this.products, null, '\t'))
+      this.#products.push(newProduct)
+      await fs.promises.writeFile(this.#path, JSON.stringify(this.#products, null, '\t'))
 
 
     } else { return console.log('los campos no pueden estar vacios') }
   }
+
   async getProducts() {
     try {
-      const contenidoProductos = await fs.promises.readFile(this.#path)
-      
+      const contenidoProductos = await fs.promises.readFile(this.#path, 'utf-8')
+      return JSON.parse(contenidoProductos)
 
-      
-      return contenidoProductos
-      
     }
     catch (err) {
-      throw(err)
+      throw (err)
     }
   }
 
@@ -59,17 +62,17 @@ class ProductManager {
 
   async getProductById(id) {
     try {
-      const contenidoProductos = JSON.parse(await fs.promises.readFile(this.#path))
-
-      const foundProduct = contenidoProductos.find(product => product.id === id);
+      const foundProduct = this.#products.find(product => product.id === id);
+      console.log(this.#products)
 
       if (foundProduct) {
-        console.log(foundProduct)
+        return (foundProduct)
       }
       console.log("Not Found")
     }
-    catch {
+    catch (err) {
       console.error("Error al procesar solicitud")
+      throw (err)
 
     }
 
